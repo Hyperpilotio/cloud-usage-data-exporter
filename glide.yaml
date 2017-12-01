@@ -1,0 +1,8 @@
+package: github.com/hyperpilotio/gke-utilization-analyzer
+import:
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: google.golang.org/api
+  subpackages:
+  - container/v1

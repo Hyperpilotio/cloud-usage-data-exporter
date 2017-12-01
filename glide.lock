@@ -1,0 +1,103 @@
+hash: 1c375ef0b9c2684ccc867d27619173a46b6ed80ee1c8a0a3e5ad30289143c72a
+updated: 2017-12-02T17:39:44.366895266-08:00
+imports:
+- name: cloud.google.com/go
+  version: 4ae921e17ba38f3ecd017134c7a2244d258a1a6d
+  subpackages:
+  - compute/metadata
+  - container
+  - internal/version
+  - monitoring/apiv3
+- name: github.com/golang/protobuf
+  version: 24f28ae800abfde9310e779f94be606b1a98a3fc
+  subpackages:
+  - proto
+  - protoc-gen-go/descriptor
+  - ptypes
+  - ptypes/any
+  - ptypes/duration
+  - ptypes/empty
+  - ptypes/timestamp
+- name: github.com/googleapis/gax-go
+  version: 317e0006254c44a0ac427cc52a0e083ff0b9622f
+- name: golang.org/x/net
+  version: bb807669a61aca6092d8137da1fab2150bb96ad7
+  subpackages:
+  - context
+  - context/ctxhttp
+  - http2
+  - http2/hpack
+  - internal/timeseries
+  - lex/httplex
+  - trace
+- name: golang.org/x/oauth2
+  version: 9a379c6b3e95a790ffc43293c2a78dee0d7b6e20
+  subpackages:
+  - google
+  - internal
+  - jws
+  - jwt
+- name: google.golang.org/api
+  version: 513727a0f0db0404fd7639c243a29e466bed6ca4
+  subpackages:
+  - container/v1
+  - gensupport
+  - googleapi
+  - googleapi/internal/uritemplates
+  - googleapi/transport
+  - internal
+  - iterator
+  - option
+  - transport
+  - transport/grpc
+  - transport/http
+- name: google.golang.org/appengine
+  version: 4f7eeb5305a4ba1966344836ba4af9996b7b4e05
+  subpackages:
+  - internal
+  - internal/app_identity
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/modules
+  - internal/remote_api
+  - internal/socket
+  - internal/urlfetch
+  - socket
+  - urlfetch
+- name: google.golang.org/genproto
+  version: 7f0da29060c682909f650ad8ed4e515bd74fa12a
+  subpackages:
+  - googleapis/api/annotations
+  - googleapis/api/distribution
+  - googleapis/api/label
+  - googleapis/api/metric
+  - googleapis/api/monitoredres
+  - googleapis/monitoring/v3
+  - googleapis/rpc/status
+- name: google.golang.org/grpc
+  version: cd563b81ec334abe62cda34a33b8640ea67ef5ba
+  subpackages:
+  - balancer
+  - balancer/roundrobin
+  - codes
+  - connectivity
+  - credentials
+  - credentials/oauth
+  - encoding
+  - grpclb/grpc_lb_v1/messages
+  - grpclog
+  - internal
+  - keepalive
+  - metadata
+  - naming
+  - peer
+  - resolver
+  - resolver/dns
+  - resolver/manual
+  - resolver/passthrough
+  - stats
+  - status
+  - tap
+  - transport
+testImports: []
