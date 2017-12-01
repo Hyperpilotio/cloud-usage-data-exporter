@@ -1,0 +1,70 @@
+hash: 1c375ef0b9c2684ccc867d27619173a46b6ed80ee1c8a0a3e5ad30289143c72a
+updated: 2017-11-30T16:45:43.175401901-08:00
+imports:
+- name: cloud.google.com/go
+  version: 3b1ae45394a234c385be014e9a488f2bb6eef821
+  subpackages:
+  - compute/metadata
+  - container
+  - internal
+- name: github.com/golang/protobuf
+  version: 888eb0692c857ec880338addf316bd662d5e630e
+  subpackages:
+  - proto
+- name: golang.org/x/net
+  version: 154d9f9ea81208afed560f4cf27b4860c8ed1904
+  subpackages:
+  - context
+  - context/ctxhttp
+  - http2
+  - http2/hpack
+  - internal/timeseries
+  - lex/httplex
+  - trace
+- name: golang.org/x/oauth2
+  version: 9a379c6b3e95a790ffc43293c2a78dee0d7b6e20
+  subpackages:
+  - google
+  - internal
+  - jws
+  - jwt
+- name: google.golang.org/api
+  version: 513727a0f0db0404fd7639c243a29e466bed6ca4
+  subpackages:
+  - container/v1
+  - gensupport
+  - googleapi
+  - googleapi/internal/uritemplates
+  - googleapi/transport
+  - internal
+  - option
+  - transport
+  - transport/grpc
+  - transport/http
+- name: google.golang.org/appengine
+  version: 4f7eeb5305a4ba1966344836ba4af9996b7b4e05
+  subpackages:
+  - internal
+  - internal/app_identity
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/modules
+  - internal/remote_api
+  - internal/socket
+  - internal/urlfetch
+  - socket
+  - urlfetch
+- name: google.golang.org/grpc
+  version: 0032a855ba5c8a3c8e0d71c2deef354b70af1584
+  subpackages:
+  - codes
+  - credentials
+  - credentials/oauth
+  - grpclog
+  - internal
+  - metadata
+  - naming
+  - peer
+  - transport
+testImports: []
