@@ -19,12 +19,12 @@ import (
 	"github.com/googleapis/gax-go"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/api/cloudresourcemanager/v1"
 	apiiterator "google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
 	"google.golang.org/grpc"
-	"golang.org/x/oauth2/google"
 )
 
 func ListGCEProjects(serviceAccountFile string) ([]*cloudresourcemanager.Project, error) {
