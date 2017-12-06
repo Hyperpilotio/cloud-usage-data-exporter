@@ -24,10 +24,19 @@ import (
 	"google.golang.org/api/option"
 	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
 	"google.golang.org/grpc"
+	"golang.org/x/oauth2/google"
 )
 
-func ListGCEProjects() ([]*cloudresourcemanager.Project, error) {
-	client := oauth2.NewClient(context.Background(), nil)
+func ListGCEProjects(serviceAccountFile string) ([]*cloudresourcemanager.Project, error) {
+	accountBytes, err := ioutil.ReadFile(serviceAccountFile)
+	if err != nil {
+		return nil, errors.New("Unable to read service account file: " + err.Error())
+	}
+	config, err := google.JWTConfigFromJSON(accountBytes, "https://www.googleapis.com/auth/cloud-platform")
+	if err != nil {
+		return nil, errors.New("Unable to parse account json: " + err.Error())
+	}
+	client := oauth2.NewClient(context.Background(), config.TokenSource(context.Background()))
 	service, err := cloudresourcemanager.New(client)
 	if err != nil {
 		return nil, errors.New("Unable to create resource manager client: " + err.Error())
@@ -96,11 +105,12 @@ func ProcessMetrics(
 		for err == nil {
 			tJson, _ := json.Marshal(t)
 			currentStagingSize += len(tJson)
-			fileName := tempDir + normalizedMetricName + "-" + strconv.Itoa(count)
+			fileName := tempDir + "/" + normalizedMetricName + "-" + strconv.Itoa(count)
 			err = ioutil.WriteFile(fileName, tJson, 0644)
 			if currentStagingSize >= thresholdSize {
 				objectName := metricType + "-" + normalizedMetricName + strconv.Itoa(objectCount)
 				tarFile := "/tmp/" + objectName
+				fmt.Printf("Tar file %s, tempdir %s\n", tarFile, tempDir)
 				cmd := exec.Command("tar", "-czf", tarFile, tempDir)
 				cmd.Stderr = os.Stderr
 				cmd.Stdout = os.Stdout
@@ -197,10 +207,16 @@ func DownloadMetrics(company string, projectName string, hyperpilotServiceAccoun
 
 	bucketAttrs := &storage.BucketAttrs{}
 	companyName := strings.ToLower(company)
-	bucket := storageClient.Bucket("stackdriver-" + companyName + "-" + projectName)
-	err = bucket.Create(context.Background(), "gke-data-exporter", bucketAttrs)
+	bucketName := "stackdriver-" + companyName + "-" + projectName
+	fmt.Println("Creating bucket " + bucketName)
+	bucket := storageClient.Bucket(bucketName)
+	err = bucket.Create(context.Background(), "gke-data-export", bucketAttrs)
 	if err != nil {
-		return errors.New("Unable to create new bucket: " + err.Error())
+		if strings.Contains(err.Error(), "You already own this bucket") {
+			fmt.Println("Skipping creating bucket as bucket already exists")
+		} else {
+			return errors.New("Unable to create new bucket: " + err.Error())
+		}
 	}
 
 	if err := ProcessMetrics("compute", projectName, computeMetricNames, client, interval, bucket); err != nil {
@@ -222,8 +238,13 @@ func main() {
 	company := flag.String("company", "hyperpilot", "Company name")
 	flag.Parse()
 
+	if *serviceAccountFile == "" {
+		fmt.Println("No service account path found")
+		return
+	}
+
 	if *listProjects {
-		projects, err := ListGCEProjects()
+		projects, err := ListGCEProjects(*serviceAccountFile)
 		if err != nil {
 			fmt.Println("Unable to list gce projects: " + err.Error())
 			return
@@ -243,14 +264,10 @@ func main() {
 		return
 	}
 
-	if *serviceAccountFile == "" {
-		fmt.Println("No service account path found")
-		return
-	}
-
 	for _, project := range projects {
+		fmt.Println("Downloading metrics for project: " + project)
 		if err := DownloadMetrics(*company, strings.TrimSpace(project), *hyperpilotServiceAccountFile, *serviceAccountFile); err != nil {
-			fmt.Printf("Unable to download metrics for project %s: " + err.Error())
+			fmt.Printf("Unable to download metrics for project %s: ", err.Error())
 			return
 		}
 	}
