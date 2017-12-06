@@ -69,6 +69,55 @@ func listGKEClusters(projectName string) ([]string, error) {
 	return clusterNames, nil
 }
 
+func CompressAndUploadMetrics(objectName string, tempDir string, bucket *storage.BucketHandle) error {
+	tarFile := "/tmp/" + objectName + ".tar"
+	fmt.Printf("Tar file %s, tempdir %s\n", tarFile, tempDir)
+	cmd := exec.Command("tar", "-czf", tarFile, ".")
+	cmd.Dir = tempDir
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	if err := cmd.Run(); err != nil {
+		return errors.New("Unable to tar staged metrics: " + err.Error())
+	}
+
+	cmd = exec.Command("gzip", tarFile)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	if err := cmd.Run(); err != nil {
+		return errors.New("Unable to gzip tarred metrics: " + err.Error())
+	}
+
+	tarFile += ".gz"
+	objectBytes, err := ioutil.ReadFile(tarFile)
+	if err != nil {
+		return fmt.Errorf("Unable to read gzipped file %s: %s", tarFile, err.Error())
+	}
+
+	if len(objectBytes) == 0 {
+		return fmt.Errorf("Zero bytes found from object zip file")
+	}
+
+	fmt.Println("Writing object to storage: " + objectName)
+	writer := bucket.Object(objectName).NewWriter(context.Background())
+
+	if _, err = writer.Write(objectBytes); err != nil {
+		writer.CloseWithError(err)
+		return fmt.Errorf("Unable to write metric to object %s: %s", objectName, err.Error())
+	}
+
+	writer.Close()
+
+	if err := os.RemoveAll(tarFile); err != nil {
+		return fmt.Errorf("Unable to delete tar file after upload: %s", err.Error())
+	}
+
+	if err := os.RemoveAll(tempDir); err != nil {
+		return fmt.Errorf("Unable to delete temp dir %s: %s", tempDir, err.Error())
+	}
+
+	return nil
+}
+
 func ProcessMetrics(
 	metricType string,
 	projectName string,
@@ -77,6 +126,8 @@ func ProcessMetrics(
 	interval monitoringpb.TimeInterval,
 	bucket *storage.BucketHandle) error {
 	maxReceiveSizeOption := gax.WithGRPCOptions(grpc.MaxCallRecvMsgSize(12000000))
+	// Store up to 500mb files
+	thresholdSize := 1024 * 1024 * 500
 	for _, metric := range metrics {
 		tempDir, err := ioutil.TempDir("/tmp", "metrics")
 		if err != nil {
@@ -99,8 +150,6 @@ func ProcessMetrics(
 		objectCount := 1
 		count := 1
 		currentStagingSize := 0
-		// Store up to 50mb files
-		thresholdSize := 1024 * 1024 * 50
 		normalizedMetricName := strings.Replace(metric, "/", "_", -1)
 		for err == nil {
 			tJson, _ := json.Marshal(t)
@@ -109,35 +158,13 @@ func ProcessMetrics(
 			err = ioutil.WriteFile(fileName, tJson, 0644)
 			if currentStagingSize >= thresholdSize {
 				objectName := metricType + "-" + normalizedMetricName + strconv.Itoa(objectCount)
-				tarFile := "/tmp/" + objectName
-				fmt.Printf("Tar file %s, tempdir %s\n", tarFile, tempDir)
-				cmd := exec.Command("tar", "-czf", tarFile, tempDir)
-				cmd.Stderr = os.Stderr
-				cmd.Stdout = os.Stdout
-				if err := cmd.Run(); err != nil {
-					return errors.New("Unable to tar staged metrics: " + err.Error())
-				}
-
-				objectBytes, err := ioutil.ReadFile(tarFile)
-				if err != nil {
-					return fmt.Errorf("Unable to read tarred file %s: %s", tarFile, err.Error())
-				}
-				_, err = bucket.Object(objectName).NewWriter(context.Background()).Write(objectBytes)
-				if err != nil {
-					return fmt.Errorf("Unable to write metric to object %s: %s", objectName, err.Error())
-				}
-
-				if err := os.RemoveAll(tarFile); err != nil {
-					return fmt.Errorf("Unable to delete tar file after upload: %s", err.Error())
-				}
-
-				if err := os.RemoveAll(tempDir); err != nil {
-					return fmt.Errorf("Unable to delete temp dir %s: %s", tempDir, err.Error())
+				if err := CompressAndUploadMetrics(objectName, tempDir, bucket); err != nil {
+					return errors.New("Unable to compress and upload metrics: " + err.Error())
 				}
 
 				tempDir, err = ioutil.TempDir("/tmp", "metrics")
 				if err != nil {
-					return fmt.Errorf("Unable to create tempr dir: " + err.Error())
+					return fmt.Errorf("Unable to create temp dir: " + err.Error())
 				}
 
 				currentStagingSize = 0
@@ -146,6 +173,13 @@ func ProcessMetrics(
 
 			t, err = timeIterator.Next()
 			count += 1
+		}
+
+		if currentStagingSize > 0 {
+			objectName := metricType + "-" + normalizedMetricName + strconv.Itoa(objectCount)
+			if err := CompressAndUploadMetrics(objectName, tempDir, bucket); err != nil {
+				return errors.New("Unable to compress and upload metrics: " + err.Error())
+			}
 		}
 	}
 
