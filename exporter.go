@@ -27,6 +27,43 @@ import (
 	"google.golang.org/grpc"
 )
 
+const (
+	CONTAINER = "container"
+	COMPUTE   = "compute"
+)
+
+type NodeInfo struct {
+	InstanceName string   `json:"instanceName"`
+	ClusterName  string   `json:"clusterName"`
+	NodeFiles    []string `json:"nodeFiles"`
+}
+
+type ClusterMapping struct {
+	ContainerFiles []string             `json:"containerFiles"`
+	NodeInfos      map[string]*NodeInfo `json:"nodeInfos"`
+}
+
+func NewClusterMapping() *ClusterMapping {
+	return &ClusterMapping{
+		ContainerFiles: []string{},
+		NodeInfos:      make(map[string]*NodeInfo),
+	}
+}
+
+type Index struct {
+	Clusters map[string]*ClusterMapping `json:"clusters""`
+}
+
+func NewIndex() *Index {
+	return &Index{
+		Clusters: make(map[string]*ClusterMapping),
+	}
+}
+
+type NodeStageList struct {
+	Nodes map[string]*NodeInfo
+}
+
 func ListGCEProjects(serviceAccountFile string) ([]*cloudresourcemanager.Project, error) {
 	accountBytes, err := ioutil.ReadFile(serviceAccountFile)
 	if err != nil {
@@ -124,7 +161,9 @@ func ProcessMetrics(
 	metrics []string,
 	client *monitoring.MetricClient,
 	interval monitoringpb.TimeInterval,
-	bucket *storage.BucketHandle) error {
+	bucket *storage.BucketHandle,
+	index *Index,
+	nodeStageList *NodeStageList) error {
 	maxReceiveSizeOption := gax.WithGRPCOptions(grpc.MaxCallRecvMsgSize(12000000))
 	// Store up to 500mb files
 	thresholdSize := 1024 * 1024 * 500
@@ -152,9 +191,57 @@ func ProcessMetrics(
 		currentStagingSize := 0
 		normalizedMetricName := strings.Replace(metric, "/", "_", -1)
 		for err == nil {
-			tJson, _ := json.Marshal(t)
-			currentStagingSize += len(tJson)
 			fileName := tempDir + "/" + normalizedMetricName + "-" + strconv.Itoa(count)
+			switch metricType {
+			case COMPUTE:
+				instanceName, ok := t.Metric.Labels["instance_name"]
+				if !ok {
+					return fmt.Errorf("Unable to find instance_name in metric: %+v", t)
+				}
+				instanceId, ok := t.Resource.Labels["instance_id"]
+				if !ok {
+					return fmt.Errorf("Unable to find instance_id in metric: %+v", t)
+				}
+				nodeInfo, ok := nodeStageList.Nodes[instanceId]
+				if !ok {
+					nodeInfo = &NodeInfo{
+						NodeFiles: []string{},
+					}
+					nodeStageList.Nodes[instanceId] = nodeInfo
+				}
+				nodeInfo.InstanceName = instanceName
+				nodeInfo.NodeFiles = append(nodeInfo.NodeFiles, fileName)
+
+			case CONTAINER:
+				clusterName, ok := t.Resource.Labels["cluster_name"]
+				if !ok {
+					return fmt.Errorf("Unable to find cluster_name in metric: %+v", t)
+				}
+				cluster, ok := index.Clusters[clusterName]
+				if !ok {
+					cluster = NewClusterMapping()
+					index.Clusters[clusterName] = cluster
+				}
+				cluster.ContainerFiles = append(cluster.ContainerFiles, fileName)
+				instanceId, ok := t.Resource.Labels["instance_id"]
+				if !ok {
+					return fmt.Errorf("Unable to find instance_id in metric: %+v", t)
+				}
+				nodeInfo, ok := nodeStageList.Nodes[instanceId]
+				if !ok {
+					nodeInfo = &NodeInfo{
+						NodeFiles: []string{},
+					}
+					nodeStageList.Nodes[instanceId] = nodeInfo
+				}
+				nodeInfo.ClusterName = clusterName
+			}
+			tJson, err := json.Marshal(t)
+			if err != nil {
+				return errors.New("Unable to marshal metric into json: " + err.Error())
+			}
+			currentStagingSize += len(tJson)
+
 			err = ioutil.WriteFile(fileName, tJson, 0644)
 			if currentStagingSize >= thresholdSize {
 				objectName := metricType + "-" + normalizedMetricName + strconv.Itoa(objectCount)
@@ -253,13 +340,45 @@ func DownloadMetrics(company string, projectName string, hyperpilotServiceAccoun
 		}
 	}
 
-	if err := ProcessMetrics("compute", projectName, computeMetricNames, client, interval, bucket); err != nil {
+	index := NewIndex()
+	nodeStageList := &NodeStageList{
+		Nodes: make(map[string]*NodeInfo),
+	}
+
+	if err := ProcessMetrics(CONTAINER, projectName, containerMetricNames, client, interval, bucket, index, nodeStageList); err != nil {
 		return errors.New("Unable to process compute metrics: " + err.Error())
 	}
 
-	if err := ProcessMetrics("container", projectName, containerMetricNames, client, interval, bucket); err != nil {
+	if err := ProcessMetrics(COMPUTE, projectName, computeMetricNames, client, interval, bucket, index, nodeStageList); err != nil {
 		return errors.New("Unable to process compute metrics: " + err.Error())
 	}
+
+	for instanceId, node := range nodeStageList.Nodes {
+		if node.ClusterName == "" {
+			fmt.Println("Node found not belonging to any cluster: %s", node.InstanceName)
+			continue
+		}
+
+		cluster, ok := index.Clusters[node.ClusterName]
+		if !ok {
+			return fmt.Errorf("Expected to find cluster %s in index", node.ClusterName)
+		}
+
+		cluster.NodeInfos[instanceId] = node
+	}
+
+	writer := bucket.Object("index").NewWriter(context.Background())
+	indexJson, err := json.Marshal(index)
+	if err != nil {
+		return errors.New("Unable to marshal index into json: " + err.Error())
+	}
+
+	if _, err = writer.Write(indexJson); err != nil {
+		writer.CloseWithError(err)
+		return errors.New("Unable to store index into storage: " + err.Error())
+	}
+
+	writer.Close()
 
 	return nil
 }
