@@ -43,15 +43,15 @@ type ClusterMapping struct {
 	NodeInfos      map[string]*NodeInfo `json:"nodeInfos"`
 }
 
+type Index struct {
+	Clusters map[string]*ClusterMapping `json:"clusters"`
+}
+
 func NewClusterMapping() *ClusterMapping {
 	return &ClusterMapping{
 		ContainerFiles: []string{},
 		NodeInfos:      make(map[string]*NodeInfo),
 	}
-}
-
-type Index struct {
-	Clusters map[string]*ClusterMapping `json:"clusters""`
 }
 
 func NewIndex() *Index {
@@ -191,7 +191,7 @@ func ProcessMetrics(
 		count := 1
 		currentStagingSize := 0
 		normalizedMetricName := strings.Replace(metric, "/", "_", -1)
-		for err == nil {
+		for t != nil && err == nil {
 			fileName := tempDir + "/" + normalizedMetricName + "-" + strconv.Itoa(count)
 			switch metricType {
 			case COMPUTE:
