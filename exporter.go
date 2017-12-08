@@ -182,6 +182,7 @@ func ProcessMetrics(
 		t, err := timeIterator.Next()
 		if err == apiiterator.Done {
 			fmt.Println("No metrics")
+			continue
 		} else if err != nil {
 			return fmt.Errorf("Unable to list time series: " + err.Error())
 		}
@@ -243,6 +244,10 @@ func ProcessMetrics(
 			currentStagingSize += len(tJson)
 
 			err = ioutil.WriteFile(fileName, tJson, 0644)
+			if err != nil {
+				return fmt.Errorf("Unable to write to file %s: %s", fileName, err.Error())
+			}
+
 			if currentStagingSize >= thresholdSize {
 				objectName := metricType + "-" + normalizedMetricName + strconv.Itoa(objectCount)
 				if err := CompressAndUploadMetrics(objectName, tempDir, bucket); err != nil {
