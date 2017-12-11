@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "gke-data-export",
+  "private_key_id": "05a9d460cc126a551f69fc331f7a48b0b9b7a515",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC6r7MwmnkUl5DP\ntMSugCZ1YiLrZ01Ej5sN7cSIu6xf8RkErtLFuiyQ4Ibu4K277W/wKZ9Qvh8pidGd\nQFyy81e50OCfRBPeFb9HrFUTayfTCkyt5elXeOEaOpKrLIqnyrBLqwjneKVcYr1X\n8MauQC6HcT48/m6eMMqRJ18QMLIzXaiwDdkgaqNQN8XsjFVSGo3QOrUctB/9aOq0\n2GJbwJbtz3SnM6Ne9jrS7mR6HsF6pextmRUcjfINcLl1AQ6b6VE+x60LbHSlHF0t\nRG3J2XJBx1FoSAqy5euDq+h96NuIZIghKNIff/YYL3FtgSbLMj+TziJoorRN96uB\n6b4a9GEXAgMBAAECggEARrSj++0Nnch33ssa0PKVXlEAY8MYxzZSphhfHuBhvWat\nsJHcH2pPVcHMKS4sbuhTRJUnE2gmmk9p9hJ56Ybzu1tKr9eTZMI805MIF9Y2W55j\ng1t4IJqWOx5jDXTNwRYp5kbNlQmjK5X0G5oETdveI4s25NgComRdXFOalCG1ZHFX\ngp6O7qVbEydb5hMQuVoOh2mVGcU96Ga/za+YC8K+6aIRrhEr3Jq5KVg6p3OMAZXo\n3Q/XvY7TxT/D3I/tsXy5LcAGHbTManQFPGBloSBMGzYCBCXQ0LPHwL55kS7wE0bH\nCDkfJass5P6YDzGcgaTkDTBtrkeF7HNStYKD/3D1wQKBgQDea0CIVe/MRAlrIcQu\ni0ILlMxFAUV2vJmjWtRyFlhLfO8GoaiZ9+yoI4+YTsp/+Z4f0j1HWsuCdwRwwbT+\nbzt2azlwtFQnbroKRXhcLcfEI1YpQyxL0lDn3CSpVQ7mrKcuwNGY6serucH0VZL5\n8jWErHXX5b4pgTsmXSlxNLXa1wKBgQDW31dD4Eud46jSzBJIZ7xRT0oGhdWlaj48\nY456sndJ96KHfBBXXEY0QgAc+Ym3kWtx61lch5RfLYR2knNJ2WmuD3CN7yeq7LrZ\nWZdgV/6g4u0NXoAXsWgRYbE69yeysbPosdUVByFZiIcwjuLZR1lxSg1BaZtUJzh3\nv3QVH6kjwQKBgQDWhKkcFY6P+7r9yfZ2UbfkhaIyl9RQffzM0ij+1FBalmfPhJGh\n1r45OPshEjU7Ex0QYezaalbIQVRWEG4pzEyUnTwsWLCly6TBjVlVxo3avZ43c+NA\nSdvglLIDY9dYYoNok25UR3VHSoUnzHVSfuphSRjrn1k2nL7Y9Jeo6QbQxwKBgG8G\nUenhkFDR3F6nUV8WMsj0pjQ+nQjun5/GdU1Sv655hQJqiWsKY8AGxlYyXgV630Cq\nsa7M405Wj5ZQz7891ow4sBi2lRGNZnJ+B2ihrxDkkEYTKS6U3Uf16YSlRl7f0S0Q\nDiDiYUoI8ImXmwFYC5AtCjJdZgQSi+vcAhgUFupBAoGBANOra/2F3QM8vflY37w/\nd3p8I2KNMPBzq03AcTr/RwtotdCgtZkSBNtX8GtgbeKhYgO8XmjI3cNwecvSR04P\nYj9DxWdFPNWM0AG+KWZyBz+HoctklNBntP07nvTz/O6AW9icUg/yewGOytMH8z8f\nFof1X5fMj+rz1ntAHVuMUNFn\n-----END PRIVATE KEY-----\n",
+  "client_email": "stackdriver-ingestor@gke-data-export.iam.gserviceaccount.com",
+  "client_id": "104271459934467908273",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://accounts.google.com/o/oauth2/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/stackdriver-ingestor%40gke-data-export.iam.gserviceaccount.com"
+}

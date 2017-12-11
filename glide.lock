@@ -1,13 +1,17 @@
 hash: 1c375ef0b9c2684ccc867d27619173a46b6ed80ee1c8a0a3e5ad30289143c72a
-updated: 2017-12-02T17:39:44.366895266-08:00
+updated: 2017-12-10T23:17:51.589171311-08:00
 imports:
 - name: cloud.google.com/go
   version: 4ae921e17ba38f3ecd017134c7a2244d258a1a6d
   subpackages:
   - compute/metadata
   - container
+  - iam
+  - internal
+  - internal/optional
   - internal/version
   - monitoring/apiv3
+  - storage
 - name: github.com/golang/protobuf
   version: 24f28ae800abfde9310e779f94be606b1a98a3fc
   subpackages:
@@ -27,6 +31,7 @@ imports:
   - context/ctxhttp
   - http2
   - http2/hpack
+  - idna
   - internal/timeseries
   - lex/httplex
   - trace
@@ -40,6 +45,8 @@ imports:
 - name: google.golang.org/api
   version: 513727a0f0db0404fd7639c243a29e466bed6ca4
   subpackages:
+  - cloudresourcemanager/v1
+  - compute/v1
   - container/v1
   - gensupport
   - googleapi
@@ -48,6 +55,7 @@ imports:
   - internal
   - iterator
   - option
+  - storage/v1
   - transport
   - transport/grpc
   - transport/http
@@ -73,6 +81,7 @@ imports:
   - googleapis/api/label
   - googleapis/api/metric
   - googleapis/api/monitoredres
+  - googleapis/iam/v1
   - googleapis/monitoring/v3
   - googleapis/rpc/status
 - name: google.golang.org/grpc
