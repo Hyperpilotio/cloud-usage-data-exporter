@@ -21,12 +21,11 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/cloudresourcemanager/v1"
+	compute "google.golang.org/api/compute/v1"
 	apiiterator "google.golang.org/api/iterator"
 	"google.golang.org/api/option"
-	compute "google.golang.org/api/compute/v1"
 	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
 	"google.golang.org/grpc"
-	"container/list"
 )
 
 const (
