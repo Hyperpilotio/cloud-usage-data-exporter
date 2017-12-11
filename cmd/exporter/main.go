@@ -193,7 +193,8 @@ func ProcessMetrics(
 		currentStagingSize := 0
 		normalizedMetricName := strings.Replace(metric, "/", "_", -1)
 		for t != nil && err == nil {
-			fileName := tempDir + "/" + normalizedMetricName + "-" + strconv.Itoa(count)
+			fileName := normalizedMetricName + "-" + strconv.Itoa(count)
+			filePath := tempDir + "/" + fileName
 			switch metricType {
 			case COMPUTE:
 				instanceName, ok := t.Metric.Labels["instance_name"]
@@ -244,9 +245,9 @@ func ProcessMetrics(
 			}
 			currentStagingSize += len(tJson)
 
-			err = ioutil.WriteFile(fileName, tJson, 0644)
+			err = ioutil.WriteFile(filePath, tJson, 0644)
 			if err != nil {
-				return fmt.Errorf("Unable to write to file %s: %s", fileName, err.Error())
+				return fmt.Errorf("Unable to write to file %s: %s", filePath, err.Error())
 			}
 
 			if currentStagingSize >= thresholdSize {
