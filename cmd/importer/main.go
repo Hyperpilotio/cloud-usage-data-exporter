@@ -5,7 +5,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"cloud.google.com/go/storage"
 	apiiterator "google.golang.org/api/iterator"
 	"google.golang.org/api/option"
+	"io/ioutil"
 )
 
 func DownloadMetric(bucket *storage.BucketHandle, objectName string, tempDir string) (string, error) {
@@ -28,36 +28,20 @@ func DownloadMetric(bucket *storage.BucketHandle, objectName string, tempDir str
 	defer reader.Close()
 
 	fileName := tempDir + "/" + objectName
-	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 644)
+
+	file, err := ioutil.ReadAll(reader)
 	if err != nil {
-		return "", fmt.Errorf("Unable to open file %s: %s", fileName, err.Error())
+		return "", fmt.Errorf("Unable to read storage object: " + err.Error())
 	}
 
-	defer f.Close()
-
-	defaultStagingSize := int64(1024 * 1024 * 5)
-	staging := make([]byte, defaultStagingSize)
-
-	for reader.Remain() > 0 {
-		currentStaging := staging
-		if reader.Remain() < defaultStagingSize {
-			currentStaging = make([]byte, reader.Remain())
-		}
-		_, err := reader.Read(currentStaging)
-		if err != nil {
-			return "", errors.New("Unable to read from reader: " + err.Error())
-		}
-
-		_, err = f.Write(currentStaging)
-		if err != nil {
-			return "", errors.New("Unable to write staging to file: " + err.Error())
-		}
+	if err := ioutil.WriteFile(fileName, file, 0755); err != nil {
+		return "", fmt.Errorf("Unable to write object to file: " + err.Error())
 	}
 
 	return fileName, nil
 }
 
-func DownloadMetrics(bucketName string, hyperpilotServiceAccountFile string) error {
+func DownloadMetrics(bucketName string, hyperpilotServiceAccountFile string, directory string) error {
 	storageClient, err := storage.NewClient(context.Background(), option.WithCredentialsFile(hyperpilotServiceAccountFile))
 	if err != nil {
 		return fmt.Errorf("Unable to create storage client: " + err.Error())
@@ -74,12 +58,7 @@ func DownloadMetrics(bucketName string, hyperpilotServiceAccountFile string) err
 
 	for err == nil {
 		if objectAttrs.Name != "index" {
-			tempDir, err := ioutil.TempDir("/tmp", "metric_read")
-			if err != nil {
-				return errors.New("Unable to create temp dir: " + err.Error())
-			}
-
-			fileName, err := DownloadMetric(bucket, objectAttrs.Name, tempDir)
+			fileName, err := DownloadMetric(bucket, objectAttrs.Name, directory)
 			if err != nil {
 				return fmt.Errorf("Unable to download metric %s: % s", objectAttrs.Name, err.Error())
 			}
@@ -93,7 +72,7 @@ func DownloadMetrics(bucketName string, hyperpilotServiceAccountFile string) err
 
 			fileName = strings.TrimSuffix(fileName, ".gz")
 
-			cmd = exec.Command("tar", "xvf", fileName)
+			cmd = exec.Command("tar", "xf", fileName, "-C", directory)
 			cmd.Stderr = os.Stderr
 			cmd.Stdout = os.Stdout
 			if err := cmd.Run(); err != nil {
@@ -107,10 +86,13 @@ func DownloadMetrics(bucketName string, hyperpilotServiceAccountFile string) err
 
 		objectAttrs, err = allObjects.Next()
 	}
+
+	return nil
 }
 
 func main() {
 	gsBucket := flag.String("gs-bucket", "", "Google storage bucket name")
+	directory := flag.String("directory", "", "Where to store metrics")
 	hyperpilotServiceAccountFile := flag.String("hyperpilot-service-account", "", "Hyperpilot service account file")
 	flag.Parse()
 
@@ -124,7 +106,12 @@ func main() {
 		return
 	}
 
-	if err := DownloadMetrics(*gsBucket, *hyperpilotServiceAccountFile); err != nil {
+	if *directory == "" {
+		fmt.Println("No directory found")
+		return
+	}
+
+	if err := DownloadMetrics(*gsBucket, *hyperpilotServiceAccountFile, *directory); err != nil {
 		fmt.Println("Unable to download metrics: " + err.Error())
 		return
 	}
