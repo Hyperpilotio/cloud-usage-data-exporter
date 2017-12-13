@@ -336,7 +336,15 @@ func DownloadInstancesData(bucket *storage.BucketHandle, projectName string, ser
 }
 
 func DownloadMetrics(bucket *storage.BucketHandle, projectName string, serviceAccountFile string) error {
-	client, err := monitoring.NewMetricClient(context.Background(), option.WithCredentialsFile(serviceAccountFile))
+	var err error
+	var client *monitoring.MetricClient
+
+	if serviceAccountFile != "" {
+		client, err = monitoring.NewMetricClient(context.Background(), option.WithCredentialsFile(serviceAccountFile))
+	} else {
+		client, err = monitoring.NewMetricClient(context.Background())
+	}
+
 	if err != nil {
 		return fmt.Errorf("Failed to create monitoring client: " + err.Error())
 	}
@@ -464,11 +472,6 @@ func main() {
 	hyperpilotServiceAccountFile := flag.String("hyperpilot-service-account", "", "Path to hyperpilot service account file")
 	company := flag.String("company", "hyperpilot", "Company name")
 	flag.Parse()
-
-	if *serviceAccountFile == "" {
-		fmt.Println("No service account path found")
-		return
-	}
 
 	if *listProjects {
 		projects, err := ListGCEProjects(*serviceAccountFile)
