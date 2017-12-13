@@ -16,10 +16,6 @@ import (
 )
 
 func DownloadMetric(bucket *storage.BucketHandle, objectName string, tempDir string) (string, error) {
-	if !strings.HasSuffix(objectName, ".tar.gz") {
-		return "", errors.New("Unexpected suffix from object: " + objectName)
-	}
-
 	reader, err := bucket.Object(objectName).NewReader(context.Background())
 	if err != nil {
 		return "", fmt.Errorf("Unable to read object %s: %s", objectName, err.Error())
@@ -57,12 +53,12 @@ func DownloadMetrics(bucketName string, hyperpilotServiceAccountFile string, dir
 	}
 
 	for err == nil {
-		if objectAttrs.Name != "index" {
-			fileName, err := DownloadMetric(bucket, objectAttrs.Name, directory)
-			if err != nil {
-				return fmt.Errorf("Unable to download metric %s: % s", objectAttrs.Name, err.Error())
-			}
+		fileName, err := DownloadMetric(bucket, objectAttrs.Name, directory)
+		if err != nil {
+			return fmt.Errorf("Unable to download metric %s: % s", objectAttrs.Name, err.Error())
+		}
 
+		if strings.HasSuffix(fileName, ".gz") {
 			cmd := exec.Command("gunzip", fileName)
 			cmd.Stderr = os.Stderr
 			cmd.Stdout = os.Stdout
